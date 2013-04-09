@@ -18,6 +18,10 @@ package org.kie.commons.java.nio.file;
 
 public class AtomicMoveNotSupportedException extends FileSystemException {
 
+    public AtomicMoveNotSupportedException() {
+        super();
+    }
+
     public AtomicMoveNotSupportedException(String source, String target, String reason) {
         super(source, target, reason);
     }

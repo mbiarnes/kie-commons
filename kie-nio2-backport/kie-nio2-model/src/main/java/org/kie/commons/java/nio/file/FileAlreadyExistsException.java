@@ -18,11 +18,17 @@ package org.kie.commons.java.nio.file;
 
 public class FileAlreadyExistsException extends FileSystemException {
 
-    public FileAlreadyExistsException(String file) {
-        super(file);
+    public FileAlreadyExistsException() {
+        super();
     }
 
-    public FileAlreadyExistsException(String file, String other, String reason) {
-        super(file, other, reason);
+    public FileAlreadyExistsException( String file ) {
+        super( file );
+    }
+
+    public FileAlreadyExistsException( String file,
+                                       String other,
+                                       String reason ) {
+        super( file, other, reason );
     }
 }

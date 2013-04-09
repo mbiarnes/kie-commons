@@ -18,6 +18,10 @@ package org.kie.commons.java.nio.file;
 
 public class NotLinkException extends FileSystemException {
 
+    public NotLinkException() {
+        super();
+    }
+
     public NotLinkException(String file) {
         super(file);
     }

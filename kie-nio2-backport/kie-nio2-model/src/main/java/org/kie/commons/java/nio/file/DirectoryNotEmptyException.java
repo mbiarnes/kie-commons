@@ -18,7 +18,11 @@ package org.kie.commons.java.nio.file;
 
 public class DirectoryNotEmptyException extends FileSystemException {
 
-    public DirectoryNotEmptyException(String dir) {
-        super(dir);
+    public DirectoryNotEmptyException() {
+        super();
+    }
+
+    public DirectoryNotEmptyException( String dir ) {
+        super( dir );
     }
 }

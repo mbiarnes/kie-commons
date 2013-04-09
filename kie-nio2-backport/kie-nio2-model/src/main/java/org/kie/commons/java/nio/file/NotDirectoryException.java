@@ -18,7 +18,11 @@ package org.kie.commons.java.nio.file;
 
 public class NotDirectoryException extends FileSystemException {
 
-    public NotDirectoryException(String file) {
-        super(file);
+    public NotDirectoryException() {
+        super();
+    }
+
+    public NotDirectoryException( String file ) {
+        super( file );
     }
 }

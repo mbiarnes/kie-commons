@@ -19,11 +19,12 @@
     "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 <module>
 
-  <source path='channels'/>
-  <source path='file'/>
-  <source path='util'/>
-  <source path=''/>
+  <source path='file'>
+    <include name="**/*Exception*"/>
+  </source>
 
-  <super-source path='jre'/>
+  <source path=''>
+    <include name="**/*Exception*"/>
+  </source>
 
 </module>

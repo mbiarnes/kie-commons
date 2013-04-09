@@ -18,10 +18,16 @@ package org.kie.commons.java.nio.file;
 
 public class InvalidPathException extends IllegalArgumentException {
 
-    public InvalidPathException(String input, String reason, int index) {
+    public InvalidPathException() {
     }
 
-    public InvalidPathException(String input, String reason) {
+    public InvalidPathException( String input,
+                                 String reason,
+                                 int index ) {
+    }
+
+    public InvalidPathException( String input,
+                                 String reason ) {
     }
 
     public String getInput() {

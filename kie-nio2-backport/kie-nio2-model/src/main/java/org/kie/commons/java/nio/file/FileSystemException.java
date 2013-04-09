@@ -20,10 +20,15 @@ import org.kie.commons.java.nio.IOException;
 
 public class FileSystemException extends IOException {
 
-    public FileSystemException(String file) {
+    public FileSystemException() {
     }
 
-    public FileSystemException(String file, String other, String reason) {
+    public FileSystemException( String file ) {
+    }
+
+    public FileSystemException( String file,
+                                String other,
+                                String reason ) {
     }
 
     public String getFile() {
