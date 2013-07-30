@@ -49,7 +49,7 @@ public class JGitFileSystem implements FileSystem,
         add( "version" );
     }} );
 
-    private final FileSystemProvider provider;
+    private final JGitFileSystemProvider provider;
     private final Git gitRepo;
     private final ListBranchCommand.ListMode listMode;
     private final String fullHostName;
@@ -59,7 +59,7 @@ public class JGitFileSystem implements FileSystem,
     private final CredentialsProvider credential;
     private final Queue<WatchKey> events = new ConcurrentLinkedQueue<WatchKey>();
 
-    JGitFileSystem( final FileSystemProvider provider,
+    JGitFileSystem( final JGitFileSystemProvider provider,
                     final String fullHostName,
                     final Git git,
                     final String name,
@@ -67,7 +67,7 @@ public class JGitFileSystem implements FileSystem,
         this( provider, fullHostName, git, name, null, credential );
     }
 
-    JGitFileSystem( final FileSystemProvider provider,
+    JGitFileSystem( final JGitFileSystemProvider provider,
                     final String fullHostName,
                     final Git git,
                     final String name,
@@ -280,6 +280,7 @@ public class JGitFileSystem implements FileSystem,
         checkClose();
         gitRepo.getRepository().close();
         isClose = true;
+        provider.onCloseFileSystem( this );
     }
 
     private void checkClose() throws IllegalStateException {

@@ -53,6 +53,8 @@ public interface IOService {
 
     public static Set<OpenOption> EMPTY_OPTIONS = new HashSet<OpenOption>();
 
+    void dispose();
+
     void startBatch();
 
     void endBatch();

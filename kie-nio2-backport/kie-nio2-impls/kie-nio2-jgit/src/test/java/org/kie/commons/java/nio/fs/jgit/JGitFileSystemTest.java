@@ -40,7 +40,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testOnlyLocalRoot() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git = setupGit();
         final JGitFileSystem fileSystem = new JGitFileSystem( fsProvider, null, git, "my-repo", CredentialsProvider.getDefault() );
@@ -58,7 +58,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testRemoteRoot() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final File tempDir = createTempDirectory();
         final Git git = Git.cloneRepository().setNoCheckout( false ).setBare( true ).setCloneAllBranches( true ).setURI( setupGit().getRepository().getDirectory().toString() ).setDirectory( tempDir ).call();
@@ -78,7 +78,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testProvider() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git = setupGit();
 
@@ -93,7 +93,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test(expected = IllegalStateException.class)
     public void testClose() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git = setupGit();
 
@@ -112,7 +112,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testSupportedFileAttributeViews() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git = setupGit();
 
@@ -127,7 +127,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testPathNonBranchRooted() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
         when( fsProvider.isDefault() ).thenReturn( false );
         when( fsProvider.getScheme() ).thenReturn( "git" );
 
@@ -150,7 +150,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testPathNonBranchNonRooted() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
         when( fsProvider.isDefault() ).thenReturn( false );
         when( fsProvider.getScheme() ).thenReturn( "git" );
 
@@ -173,7 +173,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testPathBranchRooted() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
         when( fsProvider.isDefault() ).thenReturn( false );
         when( fsProvider.getScheme() ).thenReturn( "git" );
 
@@ -196,7 +196,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testPathBranchNonRooted() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
         when( fsProvider.isDefault() ).thenReturn( false );
         when( fsProvider.getScheme() ).thenReturn( "git" );
 
@@ -219,7 +219,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testPathBranchRooted2() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
         when( fsProvider.isDefault() ).thenReturn( false );
         when( fsProvider.getScheme() ).thenReturn( "git" );
 
@@ -242,7 +242,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testPathBranchNonRooted2() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
         when( fsProvider.isDefault() ).thenReturn( false );
         when( fsProvider.getScheme() ).thenReturn( "git" );
 
@@ -265,7 +265,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testFileStore() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final File tempDir = createTempDirectory();
         final Git git = setupGit( tempDir );
@@ -282,7 +282,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test
     public void testPathEqualsWithDifferentRepos() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git1 = setupGit();
 
@@ -303,7 +303,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
     @Test(expected = UnsupportedOperationException.class)
     @Ignore
     public void testNewWatchService() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git = setupGit();
 
@@ -313,7 +313,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testGetUserPrincipalLookupService() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git = setupGit();
 
@@ -323,7 +323,7 @@ public class JGitFileSystemTest extends AbstractTestInfra {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testGetPathMatcher() throws IOException, GitAPIException {
-        final FileSystemProvider fsProvider = mock( FileSystemProvider.class );
+        final JGitFileSystemProvider fsProvider = mock( JGitFileSystemProvider.class );
 
         final Git git = setupGit();
 

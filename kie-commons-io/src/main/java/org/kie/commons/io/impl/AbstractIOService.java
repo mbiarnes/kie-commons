@@ -455,6 +455,16 @@ public abstract class AbstractIOService implements IOService {
     }
 
     @Override
+    public void dispose() {
+        for ( final FileSystem fileSystem : getFileSystems() ) {
+            try {
+                fileSystem.close();
+            } catch ( Exception ex ) {
+            }
+        }
+    }
+
+    @Override
     public FileAttribute<?>[] convert( final Map<String, ?> attrs ) {
 
         if ( attrs == null || attrs.size() == 0 ) {

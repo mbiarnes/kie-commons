@@ -160,6 +160,11 @@ public class IOServiceClusterImpl implements IOService {
     }
 
     @Override
+    public void dispose() {
+        service.dispose();
+    }
+
+    @Override
     public void startBatch() {
         clusterService.lock();
     }

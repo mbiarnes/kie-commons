@@ -139,6 +139,7 @@ public class JGitFileSystemProvider implements FileSystemProvider {
 
     private final Daemon deamonService;
     private final Map<String, JGitFileSystem> fileSystems = new ConcurrentHashMap<String, JGitFileSystem>();
+    private final Set<JGitFileSystem> closedFileSystems = new HashSet<JGitFileSystem>();
     private final Map<Repository, JGitFileSystem> repoIndex = new ConcurrentHashMap<Repository, JGitFileSystem>();
 
     private final String fullHostName;
@@ -193,6 +194,13 @@ public class JGitFileSystemProvider implements FileSystemProvider {
                     DEAMON_UPLOAD = DEAMON_DEFAULT_UPLOAD;
                 }
             }
+        }
+    }
+
+    public void onCloseFileSystem( final JGitFileSystem fileSystem ) {
+        closedFileSystems.add( fileSystem );
+        if ( closedFileSystems.size() == fileSystems.size() ) {
+            deamonService.stop();
         }
     }
 
@@ -482,6 +490,14 @@ public class JGitFileSystemProvider implements FileSystemProvider {
         final Object _clusterService = env.get( "clusterService" );
         if ( _clusterService != null && _clusterService instanceof ClusterService ) {
             clusterMap.put( git.getRepository(), (ClusterService) _clusterService );
+        }
+
+        if ( DEAMON_ENABLED && deamonService != null && !deamonService.isRunning() ) {
+            try {
+                deamonService.start();
+            } catch ( java.io.IOException e ) {
+                throw new IOException( e );
+            }
         }
 
         return fs;
