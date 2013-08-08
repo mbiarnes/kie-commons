@@ -51,8 +51,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.Daemon;
-import org.eclipse.jgit.transport.DaemonClient;
 import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
@@ -63,6 +61,7 @@ import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import org.eclipse.jgit.util.FileUtils;
 import org.kie.commons.cluster.ClusterService;
 import org.kie.commons.data.Pair;
 import org.kie.commons.java.nio.IOException;
@@ -101,6 +100,8 @@ import org.kie.commons.java.nio.file.attribute.BasicFileAttributes;
 import org.kie.commons.java.nio.file.attribute.FileAttribute;
 import org.kie.commons.java.nio.file.attribute.FileAttributeView;
 import org.kie.commons.java.nio.file.spi.FileSystemProvider;
+import org.kie.commons.java.nio.fs.jgit.util.Daemon;
+import org.kie.commons.java.nio.fs.jgit.util.DaemonClient;
 import org.kie.commons.java.nio.fs.jgit.util.JGitUtil;
 import org.kie.commons.message.MessageType;
 
@@ -137,7 +138,7 @@ public class JGitFileSystemProvider implements FileSystemProvider {
     public static final int SCHEME_SIZE = ( SCHEME + "://" ).length();
     public static final int DEFAULT_SCHEME_SIZE = ( "default://" ).length();
 
-    private final Daemon deamonService;
+    private Daemon deamonService = null;
     private final Map<String, JGitFileSystem> fileSystems = new ConcurrentHashMap<String, JGitFileSystem>();
     private final Set<JGitFileSystem> closedFileSystems = new HashSet<JGitFileSystem>();
     private final Map<Repository, JGitFileSystem> repoIndex = new ConcurrentHashMap<Repository, JGitFileSystem>();
@@ -199,7 +200,7 @@ public class JGitFileSystemProvider implements FileSystemProvider {
 
     public void onCloseFileSystem( final JGitFileSystem fileSystem ) {
         closedFileSystems.add( fileSystem );
-        if ( closedFileSystems.size() == fileSystems.size() ) {
+        if ( deamonService != null && closedFileSystems.size() == fileSystems.size() ) {
             deamonService.stop();
         }
     }
@@ -257,73 +258,77 @@ public class JGitFileSystemProvider implements FileSystemProvider {
             }
         }
         if ( DEAMON_ENABLED ) {
-
-            deamonService = new Daemon( new InetSocketAddress( DEAMON_HOST, DEAMON_PORT ) );
-            deamonService.getService( "git-receive-pack" ).setEnabled( DEAMON_UPLOAD );
-            deamonService.setRepositoryResolver( new RepositoryResolverImpl() );
-            deamonService.setReceivePackFactory( new ReceivePackFactory<DaemonClient>() {
-                @Override
-                public ReceivePack create( final DaemonClient req,
-                                           final Repository db ) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
-
-                    return new ReceivePack( db ) {{
-                        final ClusterService clusterService = clusterMap.get( db );
-                        final JGitFileSystem fs = repoIndex.get( db );
-                        final String treeRef = "master";
-                        final ObjectId oldHead = JGitUtil.getTreeRefObjectId( db, treeRef );
-
-                        setPreReceiveHook( new PreReceiveHook() {
-                            @Override
-                            public void onPreReceive( final ReceivePack rp,
-                                                      final Collection<ReceiveCommand> commands ) {
-                                if ( clusterService != null ) {
-                                    clusterService.lock();
-                                }
-                            }
-                        } );
-
-                        setPostReceiveHook( new PostReceiveHook() {
-                            @Override
-                            public void onPostReceive( final ReceivePack rp,
-                                                       final Collection<ReceiveCommand> commands ) {
-                                final ObjectId newHead = JGitUtil.getTreeRefObjectId( db, treeRef );
-                                notifyDiffs( fs, treeRef, oldHead, newHead );
-
-                                if ( clusterService != null ) {
-                                    clusterService.broadcast( new MessageType() {
-
-                                                                  @Override
-                                                                  public String toString() {
-                                                                      return "SYNC_FS";
-                                                                  }
-
-                                                                  @Override
-                                                                  public int hashCode() {
-                                                                      return "SYNC_FS".hashCode();
-                                                                  }
-                                                              },
-                                                              new HashMap<String, String>() {{
-                                                                  put( "fs_scheme", "git" );
-                                                                  put( "fs_id", fs.id() );
-                                                                  put( "fs_uri", fs.toString() );
-                                                              }}
-                                                            );
-
-                                    clusterService.unlock();
-                                }
-                            }
-                        } );
-                    }};
-                }
-            } );
-            try {
-                deamonService.start();
-            } catch ( java.io.IOException e ) {
-                throw new IOException( e );
-            }
+            buildAndStartDeamon();
         } else {
             deamonService = null;
         }
+    }
+
+    private void buildAndStartDeamon() {
+        deamonService = new Daemon( new InetSocketAddress( DEAMON_HOST, DEAMON_PORT ) );
+        deamonService.getService( "git-receive-pack" ).setEnabled( DEAMON_UPLOAD );
+        deamonService.setRepositoryResolver( new RepositoryResolverImpl() );
+        deamonService.setReceivePackFactory( new ReceivePackFactory<DaemonClient>() {
+            @Override
+            public ReceivePack create( final DaemonClient req,
+                                       final Repository db ) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
+
+                return new ReceivePack( db ) {{
+                    final ClusterService clusterService = clusterMap.get( db );
+                    final JGitFileSystem fs = repoIndex.get( db );
+                    final String treeRef = "master";
+                    final ObjectId oldHead = JGitUtil.getTreeRefObjectId( db, treeRef );
+
+                    setPreReceiveHook( new PreReceiveHook() {
+                        @Override
+                        public void onPreReceive( final ReceivePack rp,
+                                                  final Collection<ReceiveCommand> commands ) {
+                            if ( clusterService != null ) {
+                                clusterService.lock();
+                            }
+                        }
+                    } );
+
+                    setPostReceiveHook( new PostReceiveHook() {
+                        @Override
+                        public void onPostReceive( final ReceivePack rp,
+                                                   final Collection<ReceiveCommand> commands ) {
+                            final ObjectId newHead = JGitUtil.getTreeRefObjectId( db, treeRef );
+                            notifyDiffs( fs, treeRef, oldHead, newHead );
+
+                            if ( clusterService != null ) {
+                                clusterService.broadcast( new MessageType() {
+
+                                                              @Override
+                                                              public String toString() {
+                                                                  return "SYNC_FS";
+                                                              }
+
+                                                              @Override
+                                                              public int hashCode() {
+                                                                  return "SYNC_FS".hashCode();
+                                                              }
+                                                          },
+                                                          new HashMap<String, String>() {{
+                                                              put( "fs_scheme", "git" );
+                                                              put( "fs_id", fs.id() );
+                                                              put( "fs_uri", fs.toString() );
+                                                          }}
+                                                        );
+
+                                clusterService.unlock();
+                            }
+                        }
+                    } );
+                }};
+            }
+        } );
+        try {
+            deamonService.start();
+        } catch ( java.io.IOException e ) {
+            throw new IOException( e );
+        }
+
     }
 
     private synchronized void notifyDiffs( final JGitFileSystem fs,
@@ -493,11 +498,7 @@ public class JGitFileSystemProvider implements FileSystemProvider {
         }
 
         if ( DEAMON_ENABLED && deamonService != null && !deamonService.isRunning() ) {
-            try {
-                deamonService.start();
-            } catch ( java.io.IOException e ) {
-                throw new IOException( e );
-            }
+            buildAndStartDeamon();
         }
 
         return fs;
@@ -857,6 +858,11 @@ public class JGitFileSystemProvider implements FileSystemProvider {
             throws DirectoryNotEmptyException, NoSuchFileException, IOException, SecurityException {
         checkNotNull( "path", path );
 
+        if ( path instanceof JGitFSPath ) {
+            deleteRepo( path.getFileSystem() );
+            return;
+        }
+
         final JGitPathImpl gPath = toPathImpl( path );
 
         if ( isBranch( gPath ) ) {
@@ -865,6 +871,20 @@ public class JGitFileSystemProvider implements FileSystemProvider {
         }
 
         deleteAsset( gPath );
+    }
+
+    private boolean deleteRepo( final FileSystem fileSystem ) {
+        final File gitDir = ( (JGitFileSystem) fileSystem ).gitRepo().getRepository().getDirectory();
+        fileSystem.close();
+
+        try {
+            FileUtils.delete( gitDir, FileUtils.RECURSIVE );
+            closedFileSystems.remove( fileSystem );
+            fileSystems.remove( ( (JGitFileSystem) fileSystem ).id() );
+            return true;
+        } catch ( java.io.IOException e ) {
+            throw new IOException( e );
+        }
     }
 
     public void deleteAsset( final JGitPathImpl path ) {
@@ -901,6 +921,10 @@ public class JGitFileSystemProvider implements FileSystemProvider {
     public boolean deleteIfExists( final Path path )
             throws DirectoryNotEmptyException, IOException, SecurityException {
         checkNotNull( "path", path );
+
+        if ( path instanceof JGitFSPath ) {
+            return deleteRepo( path.getFileSystem() );
+        }
 
         final JGitPathImpl gPath = toPathImpl( path );
 

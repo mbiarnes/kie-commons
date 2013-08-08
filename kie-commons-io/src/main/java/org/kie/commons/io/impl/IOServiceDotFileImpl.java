@@ -54,7 +54,10 @@ public class IOServiceDotFileImpl
             throws IllegalArgumentException, NoSuchFileException, DirectoryNotEmptyException,
             IOException, SecurityException {
         Files.delete( path );
-        Files.deleteIfExists( dot( path ) );
+        try {
+            Files.deleteIfExists( dot( path ) );
+        } catch ( Exception ex ) {
+        }
         if ( path instanceof AttrHolder ) {
             ( (AttrHolder) path ).getAttrStorage().clear();
         }
@@ -64,7 +67,10 @@ public class IOServiceDotFileImpl
     public synchronized boolean deleteIfExists( final Path path )
             throws IllegalArgumentException, DirectoryNotEmptyException, IOException, SecurityException {
         final boolean result = Files.deleteIfExists( path );
-        Files.deleteIfExists( dot( path ) );
+        try {
+            Files.deleteIfExists( dot( path ) );
+        } catch ( Exception ex ) {
+        }
         if ( path instanceof AttrHolder ) {
             ( (AttrHolder) path ).getAttrStorage().clear();
         }

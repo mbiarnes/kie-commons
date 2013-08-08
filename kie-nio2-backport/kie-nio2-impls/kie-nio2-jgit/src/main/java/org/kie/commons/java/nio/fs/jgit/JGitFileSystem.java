@@ -203,7 +203,9 @@ public class JGitFileSystem implements FileSystem,
                          final String... more )
             throws InvalidPathException {
         checkClose();
-        checkNotEmpty( "first", first );
+        if ( first == null || first.trim().isEmpty() ) {
+            return new JGitFSPath( this );
+        }
 
         if ( more == null || more.length == 0 ) {
             return JGitPathImpl.create( this, first, JGitPathImpl.DEFAULT_REF_TREE + "@" + name, false );

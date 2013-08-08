@@ -535,6 +535,19 @@ public class JGitFileSystemProviderTest extends AbstractTestInfra {
         }
 
         PROVIDER.delete( path );
+
+        try {
+            PROVIDER.newFileSystem( newRepo, EMPTY_ENV );
+            failBecauseExceptionWasNotThrown( FileSystemAlreadyExistsException.class );
+        } catch ( FileSystemAlreadyExistsException e ) {
+        }
+
+        final Path fsPath = path.getFileSystem().getPath( null );
+        PROVIDER.delete( fsPath );
+        assertThat( fsPath.getFileSystem().isOpen() ).isEqualTo( false );
+
+        final URI newRepo2 = URI.create( "git://delete1-test-repo" );
+        PROVIDER.newFileSystem( newRepo2, EMPTY_ENV );
     }
 
     @Test

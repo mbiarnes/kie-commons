@@ -33,8 +33,8 @@ import static org.eclipse.jgit.lib.Constants.*;
 public class JGitPathImpl extends AbstractPath<JGitFileSystem>
         implements SegmentedPath {
 
-    private static final int    BUFFER_SIZE      = 8192;
-    public final static  String DEFAULT_REF_TREE = MASTER;
+    private static final int BUFFER_SIZE = 8192;
+    public final static String DEFAULT_REF_TREE = MASTER;
 
     private final ObjectId objectId;
 
@@ -119,6 +119,10 @@ public class JGitPathImpl extends AbstractPath<JGitFileSystem>
         return new JGitPathImpl( fs, setupPath( path ), setupHost( host ), null, true, isRealPath, true );
     }
 
+    public static JGitPathImpl createFSDirect( final JGitFileSystem fs ) {
+        return new JGitPathImpl( fs, null, null, null, true, true, true );
+    }
+
     @Override
     public File toFile()
             throws UnsupportedOperationException {
@@ -144,7 +148,7 @@ public class JGitPathImpl extends AbstractPath<JGitFileSystem>
     }
 
     private static String setupHost( final String host ) {
-        if ( host.indexOf( "@" ) == -1 ) {
+        if ( !host.contains( "@" ) ) {
             return DEFAULT_REF_TREE + "@" + host;
         }
 
