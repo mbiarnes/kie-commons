@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import javax.inject.Singleton;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterDeploymentValidation;
@@ -41,7 +42,8 @@ public class StartupBeanExtension implements Extension {
     };
 
     public <X> void processBean( @Observes final ProcessBean<X> event ) {
-        if ( event.getAnnotated().isAnnotationPresent( Startup.class ) && event.getAnnotated().isAnnotationPresent( ApplicationScoped.class ) ) {
+        if ( event.getAnnotated().isAnnotationPresent( Startup.class ) && (event.getAnnotated().isAnnotationPresent( ApplicationScoped.class ) 
+		|| event.getAnnotated().isAnnotationPresent( Singleton.class))) {
             final Startup startupAnnotation = event.getAnnotated().getAnnotation( Startup.class );
             final StartupType type = startupAnnotation.value();
             final int priority = startupAnnotation.priority();
