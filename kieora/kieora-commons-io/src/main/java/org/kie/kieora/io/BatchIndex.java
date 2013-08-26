@@ -26,6 +26,8 @@ import org.kie.commons.java.nio.file.attribute.BasicFileAttributes;
 import org.kie.commons.java.nio.file.attribute.FileAttribute;
 import org.kie.commons.java.nio.file.attribute.FileAttributeView;
 import org.kie.kieora.engine.MetaIndexEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.kie.commons.java.nio.file.Files.*;
 import static org.kie.commons.validation.PortablePreconditions.*;
@@ -36,8 +38,10 @@ import static org.kie.kieora.io.KObjectUtil.*;
  */
 public final class BatchIndex {
 
-    private final MetaIndexEngine                      indexEngine;
-    private final IOService                            ioService;
+    private static final Logger LOG = LoggerFactory.getLogger( BatchIndex.class );
+
+    private final MetaIndexEngine indexEngine;
+    private final IOService ioService;
     private final Class<? extends FileAttributeView>[] views;
 
     public BatchIndex( final MetaIndexEngine indexEngine,
@@ -67,29 +71,35 @@ public final class BatchIndex {
     }
 
     public void run( final Path root ) {
-        indexEngine.startBatchMode();
-        walkFileTree( checkNotNull( "root", root ), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile( final Path file,
-                                              final BasicFileAttributes attrs ) throws IOException {
+        try {
+            indexEngine.startBatchMode();
+            walkFileTree( checkNotNull( "root", root ), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile( final Path file,
+                                                  final BasicFileAttributes attrs ) throws IOException {
 
-                checkNotNull( "file", file );
-                checkNotNull( "attrs", attrs );
+                    checkNotNull( "file", file );
+                    checkNotNull( "attrs", attrs );
 
-                if ( !file.getFileName().toString().startsWith( "." ) ) {
+                    if ( !file.getFileName().toString().startsWith( "." ) ) {
 
-                    for ( final Class<? extends FileAttributeView> view : views ) {
-                        ioService.getFileAttributeView( file, view );
+                        for ( final Class<? extends FileAttributeView> view : views ) {
+                            ioService.getFileAttributeView( file, view );
+                        }
+
+                        final FileAttribute<?>[] allAttrs = ioService.convert( ioService.readAttributes( file ) );
+                        indexEngine.index( toKObject( file, allAttrs ) );
                     }
 
-                    final FileAttribute<?>[] allAttrs = ioService.convert( ioService.readAttributes( file ) );
-                    indexEngine.index( toKObject( file, allAttrs ) );
+                    return FileVisitResult.CONTINUE;
                 }
-
-                return FileVisitResult.CONTINUE;
-            }
-        } );
-        indexEngine.commit();
+            } );
+            indexEngine.commit();
+        } catch ( final IllegalStateException ex ) {
+            LOG.error( "Index fails - Index has an invalid state. [@" + root.getFileSystem().toString() + "]", ex );
+        } catch ( final Exception ex ) {
+            LOG.error( "Index fails. [@" + root.getFileSystem().toString() + "]", ex );
+        }
     }
 
     public void dispose() {
