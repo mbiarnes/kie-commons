@@ -92,29 +92,6 @@ public class IOServiceIndexedImpl extends IOServiceDotFileImpl {
 
     @Override
     public FileSystem newFileSystem( final URI uri,
-                                     final Map<String, ?> env )
-            throws IllegalArgumentException, FileSystemAlreadyExistsException,
-            ProviderNotFoundException, IOException, SecurityException {
-        try {
-            final FileSystem fs = super.newFileSystem( uri, env );
-            index( fs );
-            setupWatchService( fs );
-            return fs;
-        } catch ( final IllegalArgumentException ex ) {
-            throw ex;
-        } catch ( final FileSystemAlreadyExistsException ex ) {
-            throw ex;
-        } catch ( final ProviderNotFoundException ex ) {
-            throw ex;
-        } catch ( final IOException ex ) {
-            throw ex;
-        } catch ( final SecurityException ex ) {
-            throw ex;
-        }
-    }
-
-    @Override
-    public FileSystem newFileSystem( final URI uri,
                                      final Map<String, ?> env,
                                      final FileSystemType type )
             throws IllegalArgumentException, FileSystemAlreadyExistsException,

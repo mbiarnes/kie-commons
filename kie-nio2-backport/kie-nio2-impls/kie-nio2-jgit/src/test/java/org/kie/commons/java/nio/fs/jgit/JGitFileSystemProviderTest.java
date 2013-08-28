@@ -148,7 +148,9 @@ public class JGitFileSystemProviderTest extends AbstractTestInfra {
 
         final URI originRepo = URI.create( "git://my-simple-test-origin-name" );
 
-        final JGitFileSystem origin = (JGitFileSystem) PROVIDER.newFileSystem( originRepo, new HashMap<String, Object>() );
+        final JGitFileSystem origin = (JGitFileSystem) PROVIDER.newFileSystem( originRepo, new HashMap<String, Object>() {{
+            put( "listMode", "ALL" );
+        }} );
 
         commit( origin.gitRepo(), "master", "user1", "user1@example.com", "commitx", null, null, new HashMap<String, File>() {{
             put( "file.txt", tempFile( "temp" ) );
@@ -158,6 +160,7 @@ public class JGitFileSystemProviderTest extends AbstractTestInfra {
 
         final Map<String, Object> env = new HashMap<String, Object>() {{
             put( JGitFileSystemProvider.GIT_DEFAULT_REMOTE_NAME, "git://localhost:9418/my-simple-test-origin-name" );
+            put( "listMode", "ALL" );
         }};
 
         final FileSystem fs = PROVIDER.newFileSystem( newRepo, env );

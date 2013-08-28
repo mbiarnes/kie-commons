@@ -90,6 +90,7 @@ public final class KObjectUtil {
     public static KObject toKObject( final Path path,
                                      final FileAttribute<?>... attrs ) {
         return new KObject() {
+
             @Override
             public String getId() {
                 return sha1( getType().getName() + "|" + getKey() );
@@ -195,6 +196,24 @@ public final class KObjectUtil {
                     } );
 
                 }};
+            }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder( "KObject{" +
+                                                              ", key='" + getKey() + '\'' +
+                                                              ", id='" + getId() + '\'' +
+                                                              ", type=" + getType() +
+                                                              ", clusterId='" + getClusterId() + '\'' +
+                                                              ", segmentId='" + getSegmentId() + '\'' );
+
+                for ( KProperty<?> xproperty : getProperties() ) {
+                    sb.append( ", " + xproperty.getName() + "='" + xproperty.getValue() + '\'' );
+                }
+
+                sb.append( '}' );
+
+                return sb.toString();
             }
         };
     }

@@ -16,10 +16,9 @@
 
 package org.kie.kieora.backend.lucene;
 
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 import org.junit.Test;
 import org.kie.kieora.backend.lucene.fields.SimpleFieldFactory;
@@ -33,6 +32,7 @@ import org.kie.kieora.model.schema.MetaType;
 import org.kie.kieora.search.ClusterSegment;
 
 import static org.junit.Assert.*;
+import static org.kie.commons.regex.util.GlobToRegEx.*;
 
 /**
  *
@@ -106,6 +106,9 @@ public class LuceneIndexSearchTest {
 
                             @Override
                             public String getValue() {
+                                if ( index % 2 == 0 ) {
+                                    return "File" + index + ".dtxt";
+                                }
                                 return "file" + index + ".txt";
                             }
 
@@ -169,29 +172,25 @@ public class LuceneIndexSearchTest {
         }
 
         final LuceneSearchIndex searchEngine = new LuceneSearchIndex( setup );
-//        final List<KObject> documents = new ArrayList<KObject>();
-
-//        assertEquals( 0, searchEngine.searchByAttrsHits( null ) );
-//
-//        final List<KObject> initialResults = searchEngine.searchByAttrs( null, 10, 0 );
-//        for ( final KObject obj : initialResults ) {
-//            documents.add( obj );
-//        }
-//
-//        for ( int i = 0; i < 4; i++ ) {
-//            final List<KObject> results = searchEngine.searchByAttrs( null, 10, 10 * ( i + 1 ) );
-//            assertEquals( 10, results.size() );
-//            for ( final KObject result : results ) {
-//                assertFalse( documents.contains( result ) );
-//            }
-//        }
 
         assertEquals( 1, searchEngine.fullTextSearchHits( "Here49" ) );
         assertEquals( 50, searchEngine.fullTextSearchHits( "comment" ) );
         assertEquals( 0, searchEngine.fullTextSearchHits( "file.txt" ) );
         assertEquals( 1, searchEngine.fullTextSearchHits( "file10" ) );
-        assertEquals( 1, searchEngine.fullTextSearchHits( "\"file10.txt\"" ) );
-        assertEquals( 50, searchEngine.fullTextSearchHits( "file10.txt" ) );
+        assertEquals( 26, searchEngine.fullTextSearchHits( "file10.txt" ) );
+        assertEquals( 25, searchEngine.searchByAttrsHits( new HashMap<String, Object>() {{
+            put( "filename", "*.txt" );
+        }} ) );
+        assertEquals( 25, searchEngine.searchByAttrsHits( new HashMap<String, Object>() {{
+            put( "filename", "*.dtxt" );
+        }} ) );
+        assertEquals( 1, searchEngine.searchByAttrsHits( new HashMap<String, Object>() {{
+            put( "filename", "file1.*txt" );
+        }} ) );
+
+        assertEquals( 1, searchEngine.searchByAttrsHits( new HashMap<String, Object>() {{
+            put( "filename", "File0.dtxt" );
+        }} ) );
 
         assertEquals( 0, searchEngine.fullTextSearchHits( "here49", new ClusterSegment() {
             @Override

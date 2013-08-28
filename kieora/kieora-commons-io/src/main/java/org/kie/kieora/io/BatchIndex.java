@@ -26,6 +26,7 @@ import org.kie.commons.java.nio.file.attribute.BasicFileAttributes;
 import org.kie.commons.java.nio.file.attribute.FileAttribute;
 import org.kie.commons.java.nio.file.attribute.FileAttributeView;
 import org.kie.kieora.engine.MetaIndexEngine;
+import org.kie.kieora.model.KObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -25,6 +25,8 @@ import org.apache.lucene.search.IndexSearcher;
  */
 public interface LuceneSetup {
 
+    public static final String CUSTOM_FIELD_FILENAME = "filename";
+
     Analyzer getAnalyzer();
 
     void indexDocument( final String id,

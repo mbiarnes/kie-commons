@@ -18,8 +18,10 @@ package org.kie.kieora.backend.lucene.setups;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.PostingsFormat;
@@ -30,6 +32,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherFactory;
 import org.apache.lucene.store.Directory;
+import org.kie.kieora.backend.lucene.analyzer.FilenameAnalyzer;
 
 import static org.apache.lucene.util.Version.*;
 import static org.kie.commons.validation.Preconditions.*;
@@ -42,16 +45,20 @@ public class DirectoryLuceneSetup extends BaseLuceneSetup {
     public static final String REPOSITORIES_ROOT_DIR = ".index";
 
     private final IndexWriter writer;
-    private final Analyzer    analyzer;
-    private final Directory   directory;
-    private final boolean     freshIndex;
+    private final Analyzer analyzer;
+    private final Directory directory;
+    private final boolean freshIndex;
 
     public DirectoryLuceneSetup( final Directory directory,
                                  final boolean freshIndex ) {
         try {
             this.freshIndex = freshIndex;
             this.directory = checkNotNull( "directory", directory );
-            this.analyzer = new StandardAnalyzer( LUCENE_40 );
+
+            this.analyzer = new PerFieldAnalyzerWrapper( new StandardAnalyzer( LUCENE_40 ), new HashMap<String, Analyzer>() {{
+                put( CUSTOM_FIELD_FILENAME, new FilenameAnalyzer( LUCENE_40 ) );
+            }} );
+
             final IndexWriterConfig config = new IndexWriterConfig( LUCENE_40, getAnalyzer() );
 
             final Codec codec = new Lucene40Codec() {

@@ -116,6 +116,8 @@ import static org.kie.commons.validation.Preconditions.*;
 public class JGitFileSystemProvider implements FileSystemProvider {
 
     public static final String GIT_DEFAULT_REMOTE_NAME = DEFAULT_REMOTE_NAME;
+    public static final String GIT_LIST_ROOT_BRANCH_MODE = "listMode";
+
     private static final String SCHEME = "git";
 
     public static final String REPOSITORIES_ROOT_DIR = ".niogit";
@@ -439,8 +441,18 @@ public class JGitFileSystemProvider implements FileSystemProvider {
             throw new FileSystemAlreadyExistsException();
         }
 
+        ListBranchCommand.ListMode listMode;
+        if ( env.containsKey( GIT_LIST_ROOT_BRANCH_MODE ) ) {
+            try {
+                listMode = ListBranchCommand.ListMode.valueOf( (String) env.get( GIT_LIST_ROOT_BRANCH_MODE ) );
+            } catch ( Exception ex ) {
+                listMode = null;
+            }
+        } else {
+            listMode = null;
+        }
+
         final Git git;
-        final ListBranchCommand.ListMode listMode;
         final CredentialsProvider credential;
 
         boolean bare = true;
@@ -457,11 +469,9 @@ public class JGitFileSystemProvider implements FileSystemProvider {
             final String originURI = env.get( GIT_DEFAULT_REMOTE_NAME ).toString();
             credential = buildCredential( env );
             git = cloneRepository( repoDest, originURI, bare, credential );
-            listMode = ALL;
         } else {
             credential = buildCredential( null );
             git = newRepository( repoDest, bare );
-            listMode = null;
         }
 
         final JGitFileSystem fs = new JGitFileSystem( this, fullHostName, git, name, listMode, credential );

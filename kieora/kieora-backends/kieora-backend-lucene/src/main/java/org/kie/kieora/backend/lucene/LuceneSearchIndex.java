@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.sandbox.queries.regex.RegexQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -41,7 +42,9 @@ import org.kie.kieora.search.SearchIndex;
 import static java.util.Collections.*;
 import static org.apache.lucene.search.BooleanClause.Occur.*;
 import static org.apache.lucene.search.NumericRangeQuery.*;
+import static org.kie.commons.regex.util.GlobToRegEx.*;
 import static org.kie.commons.validation.PortablePreconditions.*;
+import static org.kie.kieora.backend.lucene.LuceneSetup.*;
 import static org.kie.kieora.backend.lucene.util.KObjectUtil.*;
 import static org.kie.kieora.engine.MetaIndexEngine.*;
 
@@ -56,6 +59,7 @@ public class LuceneSearchIndex implements SearchIndex {
     public LuceneSearchIndex( final LuceneSetup lucene ) {
         this.lucene = checkNotNull( "lucene", lucene );
         this.queryParser = new QueryParser( Version.LUCENE_40, FULL_TEXT_FIELD, lucene.getAnalyzer() );
+        this.queryParser.setAllowLeadingWildcard( true );
     }
 
     @Override
@@ -136,7 +140,11 @@ public class LuceneSearchIndex implements SearchIndex {
                 final Long to = ( (DateRange) entry.getValue() ).before().getTime();
                 query.add( newLongRange( entry.getKey(), from, to, true, true ), MUST );
             } else if ( entry.getValue() instanceof String ) {
-                query.add( new WildcardQuery( new Term( entry.getKey(), entry.getValue().toString() ) ), MUST );
+                if ( entry.getKey().equalsIgnoreCase( CUSTOM_FIELD_FILENAME ) ) {
+                    query.add( new RegexQuery( new Term( entry.getKey(), globToRegex( entry.getValue().toString().toLowerCase() ) ) ), MUST );
+                } else {
+                    query.add( new WildcardQuery( new Term( entry.getKey(), entry.getValue().toString() ) ), MUST );
+                }
             } else if ( entry.getValue() instanceof Boolean ) {
                 query.add( new TermQuery( new Term( entry.getKey(), ( (Boolean) entry.getValue() ) ? "0" : "1" ) ), MUST );
             }

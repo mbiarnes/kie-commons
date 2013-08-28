@@ -41,10 +41,10 @@ import static org.kie.commons.validation.Preconditions.*;
 
 public class LuceneIndexEngine implements MetaIndexEngine {
 
-    private final LuceneSetup    lucene;
-    private final FieldFactory   fieldFactory;
+    private final LuceneSetup lucene;
+    private final FieldFactory fieldFactory;
     private final MetaModelStore metaModelStore;
-    private       boolean        batchMode;
+    private int batchMode = 0;
 
     public LuceneIndexEngine( final MetaModelStore metaModelStore,
                               final LuceneSetup lucene,
@@ -60,8 +60,8 @@ public class LuceneIndexEngine implements MetaIndexEngine {
     }
 
     @Override
-    public void startBatchMode() {
-        this.batchMode = true;
+    public synchronized void startBatchMode() {
+        batchMode++;
     }
 
     @Override
@@ -128,16 +128,18 @@ public class LuceneIndexEngine implements MetaIndexEngine {
         lucene.deleteIfExists( ids );
     }
 
-    private void commitIfNotBatchMode() {
-        if ( !batchMode ) {
+    private synchronized void commitIfNotBatchMode() {
+        if ( batchMode == 0 ) {
             commit();
         }
     }
 
     @Override
-    public void commit() {
-        this.batchMode = false;
-        lucene.commit();
+    public synchronized void commit() {
+        batchMode--;
+        if ( batchMode == 0 ) {
+            lucene.commit();
+        }
     }
 
     @Override
